@@ -15,6 +15,7 @@ public class linkerlab {
 		Map <Integer, ArrayList<Integer>> addresses = new LinkedHashMap<Integer, ArrayList<Integer>>();
 		Map <Integer, Integer> absAddressError = new LinkedHashMap<Integer, Integer>();
 		ArrayList<Integer> relAddressError = new ArrayList<Integer>();
+		ArrayList<Integer> externalError = new ArrayList<Integer>();
 		Map <Integer, String> undefinedError = new HashMap<Integer, String>();
 
 		Scanner input = new Scanner(System.in);
@@ -66,7 +67,6 @@ public class linkerlab {
 					if (remainder > baseMod[modNum]){
 						addressList.set(i, curAddress - remainder);
 						relAddressError.add(count);
-					//add error if relative 
 					}
 					else{
 						addressList.set(i, addressList.get(i) + baseMod[modNum-1]);
@@ -74,18 +74,25 @@ public class linkerlab {
 				}
 				if (typeList.get(i).equals("E")){
 					int curAddress = addressList.get(i);
-					int remainder = curAddress % MACHINE_SIZE;
-					String letter = useList.get(modNum).get(remainder);
-					int newAddress;
-					if (var.get(letter)!= null){
-						newAddress = (curAddress - remainder) + var.get(letter);
+					int remainder = curAddress % 1000;
+					if (remainder >= useList.size()){
+						//add to warning list
+						externalError.add(count);
 					}
 					else{
-						newAddress = curAddress - remainder;
-						//add error
-						undefinedError.put(count, letter);
+						String letter = useList.get(modNum).get(remainder);
+						int newAddress;
+						if (var.get(letter)!= null){
+							newAddress = (curAddress - remainder) + var.get(letter);
+						}
+						else{
+							newAddress = curAddress - remainder;
+							//add error
+							undefinedError.put(count, letter);
+						}
+						addressList.set(i,newAddress);
 					}
-					addressList.set(i,newAddress);
+					
 				}
 				if (typeList.get(i).equals("A")){
 					int curAddress = addressList.get(i);
@@ -102,7 +109,6 @@ public class linkerlab {
 				count++;
 			}
 		}
-		System.out.println("entry set" + absAddressError.entrySet());
 		System.out.println("Symbol Table");
 		var.forEach((key, value) -> {
 			System.out.print(key + "=" + value);
@@ -124,7 +130,10 @@ public class linkerlab {
 					System.out.print(" " + undefinedError.get(memory) + " is not defined; zero used.");
 				}
 				else if (relAddressError.contains(memory)){
-					System.out.println(" Error: Relative address exceeds module size; zero used.");
+					System.out.print(" Error: Relative address exceeds module size; zero used.");
+				}
+				else if(externalError.contains(memory)){
+					System.out.print(" Error: External address exceeds length of use list; treated as immediate");
 				}
 				System.out.println();
 				memory++;
