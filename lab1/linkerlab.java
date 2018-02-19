@@ -14,6 +14,9 @@ public class linkerlab {
 		Map <Integer, ArrayList<String>> types = new LinkedHashMap<Integer, ArrayList<String>>();
 		Map <Integer, ArrayList<Integer>> addresses = new LinkedHashMap<Integer, ArrayList<Integer>>();
 		Map <Integer, Integer> absAddressError = new LinkedHashMap<Integer, Integer>();
+		ArrayList<Integer> relAddressError = new ArrayList<Integer>();
+		Map <Integer, String> undefinedError = new HashMap<Integer, String>();
+
 		Scanner input = new Scanner(System.in);
 		int numModules = input.nextInt();
 		int[] baseMod = new int[numModules];
@@ -57,13 +60,31 @@ public class linkerlab {
 			ArrayList<Integer> addressList = addresses.get(modNum);
 			for (int i = 0; i < typeList.size(); i++){
 				if (typeList.get(i).equals("R") && (modNum > 0)){
-					addressList.set(i, addressList.get(i) + baseMod[modNum-1]);
+					//check if relative address exceeds base module
+					int curAddress = addressList.get(i);
+					int remainder = curAddress % 1000;
+					if (remainder > baseMod[modNum]){
+						addressList.set(i, curAddress - remainder);
+						relAddressError.add(count);
+					//add error if relative 
+					}
+					else{
+						addressList.set(i, addressList.get(i) + baseMod[modNum-1]);
+					}
 				}
 				if (typeList.get(i).equals("E")){
 					int curAddress = addressList.get(i);
 					int remainder = curAddress % MACHINE_SIZE;
 					String letter = useList.get(modNum).get(remainder);
-					int newAddress = (curAddress - remainder) + var.get(letter);
+					int newAddress;
+					if (var.get(letter)!= null){
+						newAddress = (curAddress - remainder) + var.get(letter);
+					}
+					else{
+						newAddress = curAddress - remainder;
+						//add error
+						undefinedError.put(count, letter);
+					}
 					addressList.set(i,newAddress);
 				}
 				if (typeList.get(i).equals("A")){
@@ -99,10 +120,17 @@ public class linkerlab {
 				if (absAddressError.getOrDefault(memory,0) == 1){
 					System.out.print(" " + "Error: Absolute address exceeds machine size; zero used.");
 				}
+				else if (undefinedError.get(memory)!=null){
+					System.out.print(" " + undefinedError.get(memory) + " is not defined; zero used.");
+				}
+				else if (relAddressError.contains(memory)){
+					System.out.println(" Error: Relative address exceeds module size; zero used.");
+				}
 				System.out.println();
 				memory++;
 			}
 		}
+		System.out.println();
 		//print warning for defined but not used
 		var.forEach((key, value) -> {
 			if(!uses.contains(key)){
