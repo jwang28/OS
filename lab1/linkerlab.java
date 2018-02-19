@@ -7,6 +7,8 @@ public class linkerlab {
     	int numAddresses=0;
     	int counter;
 		Map <String, Integer> var = new LinkedHashMap<String, Integer>();
+		Map <String, Integer> varModule = new LinkedHashMap<String, Integer>();
+		ArrayList<String> uses = new ArrayList<String>();
 		Map <Integer, HashMap<Integer, String>> useList = new LinkedHashMap<Integer, HashMap<Integer, String>>();
 		Map <Integer, ArrayList<String>> types = new LinkedHashMap<Integer, ArrayList<String>>();
 		Map <Integer, ArrayList<Integer>> addresses = new LinkedHashMap<Integer, ArrayList<Integer>>();
@@ -18,12 +20,16 @@ public class linkerlab {
 		for (int modNum=0; modNum < numModules; modNum++) {
 			counter = input.nextInt();
 			for (int i = 0; i < counter; i++){
-				var.put(input.next(), input.nextInt()+numAddresses);
+				String variable = input.next();
+				var.put(variable, input.nextInt()+numAddresses);
+				varModule.put(variable, modNum);
 			}	
 			counter = input.nextInt();
 			HashMap<Integer, String> vars = new HashMap<Integer, String>();
 			for (int j = 0; j < counter; j++){
-				vars.put(j, input.next());
+				String use = input.next();
+				vars.put(j, use);
+				uses.add(use);
 			}
 			useList.put(modNum, vars);
 			counter = input.nextInt();
@@ -52,7 +58,6 @@ public class linkerlab {
 					String letter = useList.get(modNum).get(remainder);
 					int newAddress = (curAddress - remainder) + var.get(letter);
 					addressList.set(i,newAddress);
-					
 				}
 			}
 		}
@@ -70,5 +75,11 @@ public class linkerlab {
 				memory++;
 			}
 		}
+		//print warning for defined but not used
+		var.forEach((key, value) -> {
+			if(!uses.contains(key)){
+				System.out.println("Warning: " + key + " was defined in module " + varModule.get(key) + " but never used.");
+			}
+		});
 	}
 }
