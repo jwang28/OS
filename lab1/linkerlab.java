@@ -13,7 +13,7 @@ public class linkerlab {
 		Map <Integer, HashMap<Integer, String>> useList = new LinkedHashMap<Integer, HashMap<Integer, String>>();
 		Map <Integer, ArrayList<String>> types = new LinkedHashMap<Integer, ArrayList<String>>();
 		Map <Integer, ArrayList<Integer>> addresses = new LinkedHashMap<Integer, ArrayList<Integer>>();
-
+		Map <Integer, Integer> absAddressError = new LinkedHashMap<Integer, Integer>();
 		Scanner input = new Scanner(System.in);
 		int numModules = input.nextInt();
 		int[] baseMod = new int[numModules];
@@ -51,6 +51,7 @@ public class linkerlab {
 			addresses.put(modNum, addressList);
 		}
 
+		int count = 0;
 		for (int modNum=0; modNum < numModules; modNum++) {
 			ArrayList<String> typeList = types.get(modNum);
 			ArrayList<Integer> addressList = addresses.get(modNum);
@@ -65,9 +66,22 @@ public class linkerlab {
 					int newAddress = (curAddress - remainder) + var.get(letter);
 					addressList.set(i,newAddress);
 				}
+				if (typeList.get(i).equals("A")){
+					int curAddress = addressList.get(i);
+					int remainder = curAddress % 1000;
+					if (remainder > MACHINE_SIZE){
+						addressList.set(i, curAddress - remainder);
+						absAddressError.put(count, 1);
+					}
+					else{
+						absAddressError.put(count, 0);
+					}
+					
+				}
+				count++;
 			}
 		}
-
+		System.out.println("entry set" + absAddressError.entrySet());
 		System.out.println("Symbol Table");
 		var.forEach((key, value) -> {
 			System.out.print(key + "=" + value);
@@ -81,7 +95,11 @@ public class linkerlab {
 		for (int i = 0; i < numModules; i++){
 			ArrayList<Integer> arr = addresses.get(i);
 			for (int j = 0; j < arr.size(); j++){
-				System.out.printf("%3d: %5d\n", memory, arr.get(j));
+				System.out.printf("%3d: %5d", memory, arr.get(j));
+				if (absAddressError.getOrDefault(memory,0) == 1){
+					System.out.print(" " + "Error: Absolute address exceeds machine size; zero used.");
+				}
+				System.out.println();
 				memory++;
 			}
 		}
