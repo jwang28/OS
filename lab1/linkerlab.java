@@ -57,8 +57,18 @@ public class linkerlab {
 			}
 		}
 
-		System.out.println("done");
-		System.out.println(var.keySet() + " " + var.values());
-		System.out.println(addresses.keySet() + " " + addresses.values());
+		System.out.println("Symbol Table");
+		var.forEach((key, value) -> {
+			System.out.println(key + "=" + value);
+		});
+		System.out.println("\nMemory Map");
+		int memory = 0;
+		for (int i = 0; i < numModules; i++){
+			ArrayList<Integer> arr = addresses.get(i);
+			for (int j = 0; j < arr.size(); j++){
+				System.out.printf("%3d: %5d\n", memory, arr.get(j));
+				memory++;
+			}
+		}
 	}
 }
