@@ -8,6 +8,7 @@ public class linkerlab {
     	int counter;
 		Map <String, Integer> var = new LinkedHashMap<String, Integer>();
 		Map <String, Integer> varModule = new LinkedHashMap<String, Integer>();
+		Map <String, String> varError = new LinkedHashMap<String, String>();
 		ArrayList<String> uses = new ArrayList<String>();
 		Map <Integer, HashMap<Integer, String>> useList = new LinkedHashMap<Integer, HashMap<Integer, String>>();
 		Map <Integer, ArrayList<String>> types = new LinkedHashMap<Integer, ArrayList<String>>();
@@ -21,7 +22,12 @@ public class linkerlab {
 			counter = input.nextInt();
 			for (int i = 0; i < counter; i++){
 				String variable = input.next();
-				var.put(variable, input.nextInt()+numAddresses);
+				if (!var.containsKey(variable)){
+					var.put(variable, input.nextInt()+numAddresses);
+				}
+				else{
+					varError.put(variable, "Error: This variable is multiply defined; first value used.");
+				}
 				varModule.put(variable, modNum);
 			}	
 			counter = input.nextInt();
@@ -64,7 +70,11 @@ public class linkerlab {
 
 		System.out.println("Symbol Table");
 		var.forEach((key, value) -> {
-			System.out.println(key + "=" + value);
+			System.out.print(key + "=" + value);
+			if (varError.containsKey(key)){
+				System.out.print(" " + varError.get(key));
+			}
+			System.out.println();
 		});
 		System.out.println("\nMemory Map");
 		int memory = 0;
@@ -80,6 +90,7 @@ public class linkerlab {
 			if(!uses.contains(key)){
 				System.out.println("Warning: " + key + " was defined in module " + varModule.get(key) + " but never used.");
 			}
+			
 		});
 	}
 }
