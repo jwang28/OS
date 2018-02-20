@@ -17,17 +17,21 @@ public class linkerlab {
 		ArrayList<Integer> relAddressError = new ArrayList<Integer>();
 		ArrayList<Integer> externalError = new ArrayList<Integer>();
 		Map <Integer, String> undefinedError = new HashMap<Integer, String>();
+		Map <String, Integer> defError = new HashMap<String, Integer>();
 
 		Scanner input = new Scanner(System.in);
 		int numModules = input.nextInt();
 		int[] baseMod = new int[numModules];
 		
 		for (int modNum=0; modNum < numModules; modNum++) {
+			Map <String, Integer> definitions = new HashMap<String, Integer>();
 			counter = input.nextInt();
 			for (int i = 0; i < counter; i++){
 				String variable = input.next();
 				if (!var.containsKey(variable)){
-					var.put(variable, input.nextInt()+numAddresses);
+					int def = input.nextInt();
+					var.put(variable, def + numAddresses);
+					definitions.put(variable, def);
 				}
 				else{
 					varError.put(variable, "Error: This variable is multiply defined; first value used.");
@@ -53,6 +57,14 @@ public class linkerlab {
 			baseMod[modNum] = numAddresses;
 			types.put(modNum, typeList);
 			addresses.put(modNum, addressList);
+			//correct for definitions that exceed module size
+			int moduleNum = modNum;
+			definitions.forEach((key, value) -> {
+				if(value > baseMod[moduleNum]){
+					var.put(key, var.get(key) - value);
+					defError.put(key, moduleNum);
+				}
+			});
 		}
 
 		int count = 0;
@@ -145,7 +157,10 @@ public class linkerlab {
 			if(!uses.contains(key)){
 				System.out.println("Warning: " + key + " was defined in module " + varModule.get(key) + " but never used.");
 			}
-			
+		});
+		System.out.println();
+		defError.forEach((key, value) -> {
+			System.out.println("Error: In module " + value + " the def of " + key + " exceeds the module size; zero (relative) used.");
 		});
 	}
 }
