@@ -11,6 +11,8 @@ public class linkerlab {
 		Map <String, String> varError = new LinkedHashMap<String, String>();
 		ArrayList<String> uses = new ArrayList<String>();
 		Map <Integer, HashMap<Integer, String>> useList = new LinkedHashMap<Integer, HashMap<Integer, String>>();
+		Map <Integer, String> useListError = new LinkedHashMap<Integer,String>();
+		//error for use list but not in module
 		Map <Integer, ArrayList<String>> types = new LinkedHashMap<Integer, ArrayList<String>>();
 		Map <Integer, ArrayList<Integer>> addresses = new LinkedHashMap<Integer, ArrayList<Integer>>();
 		Map <Integer, Integer> absAddressError = new LinkedHashMap<Integer, Integer>();
@@ -28,8 +30,8 @@ public class linkerlab {
 			counter = input.nextInt();
 			for (int i = 0; i < counter; i++){
 				String variable = input.next();
+				int def = input.nextInt();
 				if (!var.containsKey(variable)){
-					int def = input.nextInt();
 					var.put(variable, def + numAddresses);
 					definitions.put(variable, def);
 				}
@@ -71,6 +73,10 @@ public class linkerlab {
 		for (int modNum=0; modNum < numModules; modNum++) {
 			ArrayList<String> typeList = types.get(modNum);
 			ArrayList<Integer> addressList = addresses.get(modNum);
+			Map<String,Boolean> allUses = new HashMap<String, Boolean>();
+			for(String s: useList.get(modNum).values()){
+				allUses.put(s, false);
+			}
 			for (int i = 0; i < typeList.size(); i++){
 				if (typeList.get(i).equals("R") && (modNum > 0)){
 					//check if relative address exceeds base module
@@ -87,6 +93,7 @@ public class linkerlab {
 				if (typeList.get(i).equals("E")){
 					int curAddress = addressList.get(i);
 					int remainder = curAddress % 1000;
+					allUses.put(useList.get(modNum).get(remainder), true);
 					if (remainder >= useList.size()){
 						//add to warning list
 						externalError.add(count);
@@ -98,6 +105,7 @@ public class linkerlab {
 							newAddress = (curAddress - remainder) + var.get(letter);
 						}
 						else{
+							//never defined variable
 							newAddress = curAddress - remainder;
 							//add error
 							undefinedError.put(count, letter);
@@ -120,6 +128,13 @@ public class linkerlab {
 				}
 				count++;
 			}
+			//check which use list cases have not been utilized, add to error hashmap
+			int moduleNumber = modNum;
+			allUses.forEach((key, value) -> {
+				if (!value && key!=null){
+					useListError.put(moduleNumber, key);
+				}
+			});
 		}
 		System.out.println("Symbol Table");
 		var.forEach((key, value) -> {
@@ -153,6 +168,10 @@ public class linkerlab {
 		}
 		System.out.println();
 		//print warning for defined but not used
+		useListError.forEach((key, value) -> {
+			System.out.println("Warning: In module " + key + " " + value + " appeared in the use list but was not actually used.");
+		});
+		System.out.println();
 		var.forEach((key, value) -> {
 			if(!uses.contains(key)){
 				System.out.println("Warning: " + key + " was defined in module " + varModule.get(key) + " but never used.");
